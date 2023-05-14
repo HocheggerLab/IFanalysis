@@ -18,7 +18,7 @@ def agg_multinucleates(df):
         else:
             agg_functions[col] = 'mean'
     df_agg = df.groupby(str_cols + ['image_id', 'Cyto_ID'], as_index=False).agg(agg_functions)
-    #df_agg["intensity_mean_EdU_nucleus"] = df_agg["intensity_mean_EdU_nucleus"]/df_agg["intensity_mean_EdU_cyto"]
+    df_agg["intensity_mean_EdU_nucleus"] = df_agg["intensity_mean_EdU_nucleus"]/df_agg["intensity_mean_EdU_cyto"]
     return df_agg
 
 
@@ -69,22 +69,22 @@ def thresholding(
     if data[DAPI_col] <= 1.5:
         return "Sub-G1"
 
-    elif 1.5 < data[DAPI_col] < 3 and data[EdU_col] < 2:
+    elif 1.5 < data[DAPI_col] < 3 and data[EdU_col] < 1.5:
         return "G1"
 
-    elif 3 <= data[DAPI_col] < 5.25 and data[EdU_col] < 2:
+    elif 3 <= data[DAPI_col] < 5.25 and data[EdU_col] < 1.5:
         return "G2/M"
 
-    elif 1.5 < data[DAPI_col] < 3 and data[EdU_col] > 2:
+    elif 1.5 < data[DAPI_col] < 3 and data[EdU_col] > 1.5:
         return "Early S"
 
-    elif 3 <= data[DAPI_col] < 5.25 and data[EdU_col] > 2:
+    elif 3 <= data[DAPI_col] < 5.25 and data[EdU_col] > 1.5:
         return "Late S"
 
-    elif data[DAPI_col] >= 5.25 and data[EdU_col] < 2:
+    elif data[DAPI_col] >= 5.25 and data[EdU_col] < 1.5:
         return "Polyploid (non-replicating)"
 
-    elif data[DAPI_col] >= 5.25 and data[EdU_col] > 2:
+    elif data[DAPI_col] >= 5.25 and data[EdU_col] > 1.5:
         return "Polyploid (replicating)"
 
     else:
@@ -119,7 +119,8 @@ def normalise_cell_line(df, ctr_cond):
         rel_cellcount = (
                 df.loc[df["cell_line"] == cell_line, "abs cell count"] / norm_value
         )
-        return pd.concat([norm_count, rel_cellcount])
+        norm_count = pd.concat([norm_count, rel_cellcount])
+    return norm_count
 
 def rel_cellcycle_phase(df, cell_cycle = 'cell_cycle'):
     df_ccphase = (

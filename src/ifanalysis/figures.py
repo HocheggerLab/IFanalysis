@@ -29,7 +29,7 @@ def cellcycle_plot(df, col, conditions, colors, title, y_log=True, save=True, pa
     phases = ["G1", "S", "G2/M"]
     col_number = len(conditions)
 
-    fig, ax = plt.subplots(ncols=col_number, figsize=(16, 3))
+    fig, ax = plt.subplots(ncols=col_number, figsize=(16, 3), sharey='all')
 
     for i, condition in enumerate(conditions):
         data = df.loc[df.condition == condition]
@@ -59,11 +59,11 @@ def cellcycle_plot(df, col, conditions, colors, title, y_log=True, save=True, pa
             ax[i].set_ylabel(col)
         if y_log:
             ax[i].set_yscale("log")
-        fig.suptitle(title)
+        fig.suptitle(title, x=0.1, size=16, weight='bold')
     if save:
         save_fig(path, title)
 
-def cellcycle_plot_comb(df, col, conditions, colors, title, save=True, path=pathlib.Path.cwd()):
+def cellcycle_plot_comb(df, conditions, colors, title, col='intensity_mean_EdU_nucleus_norm', save=True, path=pathlib.Path.cwd()):
     phases = ["G1", "S", "G2/M"]
     col_number = len(conditions)
 
@@ -110,7 +110,7 @@ def cellcycle_plot_comb(df, col, conditions, colors, title, save=True, path=path
         ax.set_xlim([1, 16])
 
         ax.grid(visible=False)
-    fig.suptitle(title, x=0.1)
+    fig.suptitle(title, x=0.1, size=16, weight='bold')
     fig._suptitle.set_weight('bold')
 
     if save:
@@ -174,7 +174,7 @@ def cellcycle_barplot(dfbar, conditions, title, path):
             else:
                 ax[number].legend().remove()
                 ax[number].set_ylabel(None)
-    fig.suptitle(title, x=0.1)
+    fig.suptitle(title, x=0.1, size=16, weight='bold')
     fig._suptitle.set_weight('bold')
     save_fig(path, title, fig_extension="pdf")
 
@@ -198,7 +198,7 @@ def intensity_plot(df, condition, conditions, title , path):
     ax.set_xlabel('')
     ax.set_ylim((0, 20000))
     ax.set_xticklabels(conditions, rotation=30, ha='right')
-    fig.suptitle(title, x=0.1)
+    fig.suptitle(title, x=0.1, size=16, weight='bold')
     fig._suptitle.set_weight('bold')
     save_fig(path, title)
 
@@ -213,6 +213,22 @@ def violin_plot(df, condition, conditions, title , path):
                   ax=ax)
     ax.set_xlabel('')
     ax.set_xticklabels(conditions, rotation=30, ha='right')
+    fig.suptitle(title, ha='left', size=16, weight='bold')
+    save_fig(path, title)
+
+
+def cellcycle_boxplot(df, condition, conditions, colors, y_label, title, path):
+    fig, ax = plt.subplots(nrows=3, figsize=(20, 6), sharey=True)
+    phases = ['G1', 'S', 'G2/M']
+    for row, phase in enumerate(phases):
+        sns.boxplot(x='condition', y=condition, data=df[df.cell_cycle==phase], color=colors[row], order=conditions, showfliers=False, ax=ax[row])
+        ax[row].set_xlabel('')
+        ax[row].set_title(phase)
+        if row == 1:
+            ax[row].set_ylabel(y_label)
+        else:
+            ax[row].set_ylabel('')
+    fig.suptitle(title, x=0.1, size=16, weight='bold')
     save_fig(path, title)
 
 
@@ -231,4 +247,3 @@ if __name__ == '__main__':
     cellcycle_barplot(df_bar, conditions, 'barplot_test', pathlib.Path('/Users/hh65/Desktop'))
     intensity_plot(df_cc, 'intensity_mean_EdU_nucleus_norm', conditions,'intensity_plot_test', pathlib.Path('/Users/hh65/Desktop'))
     # hist_plot(df_cc, df_cc.condition.unique(), 'Hist_Plot', path= pathlib.Path('/Users/hh65/Desktop'))
-
