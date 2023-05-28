@@ -57,7 +57,7 @@ def rel_cellnumber(df_count: pd.DataFrame, conditions: List[str], cell_line: str
     )
     ax.set_title(f"{title} {cell_line}")
     if save:
-        save_fig(path, f"{title}_{cell_line}")
+        save_fig(path, f"{title} {cell_line}")
 
 def cellcycleplot_comb(df_cc: pd.DataFrame, conditions: List[str], cell_line: str, bins=1000,
                         title: str = 'Combined Cell Cycle Plot', colors: List[str]= colors,
@@ -75,7 +75,7 @@ def cellcycleplot_comb(df_cc: pd.DataFrame, conditions: List[str], cell_line: st
     :param path: option, default: Path.cwd(), path to save the figure
     :return: None, saves figure in path
     """
-    phases = ["G1", "S", "G2/M"]
+    phases = ["G1", "S", "G2/M", "Polyploid", "Sub-G1"]
     col_number = len(conditions)
     df_cc = df_cc[df_cc.cell_line == cell_line]
     condition_list = conditions * 2
@@ -83,10 +83,10 @@ def cellcycleplot_comb(df_cc: pd.DataFrame, conditions: List[str], cell_line: st
     # define the grid layout with different height ratios
     gs = GridSpec(2, col_number, height_ratios=[1, 3])
     ax_list = [(i,j) for i in range(2) for j in range(col_number)]
+    y_max = df_cc[col].quantile(0.99) * 1.5
+    y_min = df_cc[col].quantile(0.01) * 0.8
     for i, pos in enumerate(ax_list):
         data = df_cc[df_cc.condition == condition_list[i]]
-        y_max = data[col].quantile(0.99) * 1.3
-        y_min = data[col].quantile(0.01) * 0.8
         ax = fig.add_subplot(gs[pos[0], pos[1]])
         if i < len(condition_list)/2:
             data['integrated_int_DAPI_norm'].plot.hist(bins=bins, color=colors[-1], ax=ax)
@@ -123,7 +123,7 @@ def cellcycleplot_comb(df_cc: pd.DataFrame, conditions: List[str], cell_line: st
     fig.suptitle(f"{title} {cell_line}", x=0.1, size=16, weight='bold')
     fig._suptitle.set_weight('bold')
     if save:
-        save_fig(path, f"{title}_{cell_line}")
+        save_fig(path, f"{title} {cell_line}", fig_extension="png")
 
 def cellcycle_scatterplot(df: pd.DataFrame, conditions: List[str], cell_line: str, col: str = 'intensity_mean_EdU_nucleus_norm',
                    title='CellCycle Scatter Plot', colors=colors,  y_log=True, save=True, path=Path.cwd()) -> None:
@@ -141,15 +141,13 @@ def cellcycle_scatterplot(df: pd.DataFrame, conditions: List[str], cell_line: st
     :return: None, saves figure in path
     """
     df = df[df.cell_line == cell_line]
-    phases = ["G1", "S", "G2/M"]
+    phases = ["G1", "S", "G2/M", "Polyploid", "Sub-G1"]
     col_number = len(conditions)
     fig, ax = plt.subplots(ncols=col_number, figsize=(16, 3), sharey='all')
-
+    y_max = df[col].quantile(0.99) * 1.3
+    y_min = df[col].quantile(0.01) * 0.8
     for i, condition in enumerate(conditions):
         data = df.loc[df.condition == condition]
-        y_max = data[col].quantile(0.99) * 1.2
-        y_min = data[col].quantile(0.01) * 0.8
-
         ax[i].scatter(data["integrated_int_DAPI_norm"], data[col], s=1, alpha=0.1)
         for idx, phase in enumerate(phases):
             phase_df = data.loc[data.cell_cycle == phase]
@@ -175,7 +173,7 @@ def cellcycle_scatterplot(df: pd.DataFrame, conditions: List[str], cell_line: st
             ax[i].set_yscale("log")
         fig.suptitle(f"{title} {cell_line}", x=0.1, size=16, weight='bold')
     if save:
-        save_fig(path, f"{title}_{cell_line}")
+        save_fig(path, f"{title} {cell_line}", fig_extension="png")
 
 
 def cellcycle_histplot(df: pd.DataFrame, conditions: List[str], cell_line: str, title='CellCycle Histogram',
@@ -220,7 +218,7 @@ def prop_pivot(df_prop: pd.DataFrame, conditions) -> Tuple[pd.DataFrame, pd.Data
     :param conditions: list of conditions sort the order of data
     :return: dataframe to submit to the barplot function
     """
-    cc_phases = ["Sub-G1", "G1", "S", "G2/M", "Polyploid"]
+    cc_phases = ["G1", "S", "G2/M", "Polyploid", "Sub-G1"]
     df_prop1 = df_prop.copy()
     df_prop1["condition"] = pd.Categorical(df_prop1["condition"], categories=conditions, ordered=True)
     df_mean = df_prop1.groupby(["condition", "cell_cycle"])["percent"].mean().sort_index(level="condition").reset_index().pivot_table(columns=["cell_cycle"], index=["condition"])
@@ -251,7 +249,7 @@ def cellcycle_barplot(df: pd.DataFrame, conditions: List[str],
         ax.set_xlabel('')
         ax.set_xticklabels(conditions, rotation=30, ha='right')
         ax.set_ylabel('% of population')
-        ax.legend(['Sub-G1', 'G1', 'S', 'G2/M', 'Polyploid'], title='CellCyclePhase', bbox_to_anchor=(1, 0.5))
+        ax.legend(['G1', 'S', 'G2/M', 'Polyploid', 'Sub-G1'], title='CellCyclePhase', bbox_to_anchor=(1, 0.5))
 
     else:
         for number, cell_line in enumerate(cell_lines):
@@ -262,7 +260,7 @@ def cellcycle_barplot(df: pd.DataFrame, conditions: List[str],
             ax[number].set_xticklabels(conditions, rotation=30, ha='right')
             ax[number].set_xlabel(cell_line)
             if number == 0:
-                    ax[number].legend(['Sub-G1', 'G1', 'S', 'G2/M', 'Polyploid'], title='CellCyclePhase', bbox_to_anchor=((len(cell_lines))*1.2, 1))
+                    ax[number].legend(['G1', 'S', 'G2/M', 'Polyploid', 'Sub-G1'], title='CellCyclePhase', bbox_to_anchor=((len(cell_lines))*1.2, 1))
                     ax[number].set_ylabel('% of population')
             else:
                 ax[number].legend().remove()

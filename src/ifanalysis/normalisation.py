@@ -52,6 +52,8 @@ def cellcycle_analysis(df: pd.DataFrame, values: List[str] = norm_colums, cyto: 
     :param cyto: True if cytoplasmic data is present
     :return: dataframe with cell cycle and cell cycle detailed columns
     """
+
+    df['intensity_mean_EdU_nucleus'] = df['intensity_mean_EdU_nucleus'] - df['intensity_min_EdU_nucleus'] + 1
     if cyto:
         df_agg = agg_multinucleates(df)
         df_agg_corr = delete_duplicates(df_agg)
@@ -85,9 +87,9 @@ def agg_multinucleates(df: pd.DataFrame) -> pd.DataFrame:
             agg_functions[col] = 'min'
         else:
             agg_functions[col] = 'mean'
-    df_agg = df.groupby(str_cols + ['image_id', 'Cyto_ID'], as_index=False).agg(agg_functions)
-    df_agg["intensity_mean_EdU_nucleus"] = df_agg["intensity_mean_EdU_nucleus"]/df_agg["intensity_mean_EdU_cyto"]
-    return df_agg
+    return df.groupby(str_cols + ['image_id', 'Cyto_ID'], as_index=False).agg(
+        agg_functions
+    )
 
 
 def delete_duplicates(df: pd.DataFrame) -> pd.DataFrame:
@@ -153,22 +155,22 @@ def thresholding(data: pd.DataFrame, DAPI_col: str = 'integrated_int_DAPI_norm',
     if data[DAPI_col] <= 1.5:
         return "Sub-G1"
 
-    elif 1.5 < data[DAPI_col] < 3 and data[EdU_col] < 1.5:
+    elif 1.5 < data[DAPI_col] < 3 and data[EdU_col] < 3:
         return "G1"
 
-    elif 3 <= data[DAPI_col] < 5.25 and data[EdU_col] < 1.5:
+    elif 3 <= data[DAPI_col] < 5.5 and data[EdU_col] < 3:
         return "G2/M"
 
-    elif 1.5 < data[DAPI_col] < 3 and data[EdU_col] > 1.5:
+    elif 1.5 < data[DAPI_col] < 3 and data[EdU_col] > 3:
         return "Early S"
 
-    elif 3 <= data[DAPI_col] < 5.25 and data[EdU_col] > 1.5:
+    elif 3 <= data[DAPI_col] < 5.5 and data[EdU_col] > 3:
         return "Late S"
 
-    elif data[DAPI_col] >= 5.25 and data[EdU_col] < 1.5:
+    elif data[DAPI_col] >= 5.5 and data[EdU_col] < 3:
         return "Polyploid (non-replicating)"
 
-    elif data[DAPI_col] >= 5.25 and data[EdU_col] > 1.5:
+    elif data[DAPI_col] >= 5.5 and data[EdU_col] > 3:
         return "Polyploid (replicating)"
 
     else:
