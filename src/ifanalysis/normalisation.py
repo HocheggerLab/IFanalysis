@@ -1,7 +1,5 @@
 import numpy as np
 import pandas as pd
-from typing import List
-
 
 # 1) Cell Counting
 def count_per_cond(df: pd.DataFrame, ctr_cond: str) -> pd.DataFrame:
@@ -45,14 +43,18 @@ def normalise_count(df: pd.DataFrame, ctr_cond: str) -> pd.Series:
 # 2) Cell Cycle Normalisation
 
 norm_colums = ('integrated_int_DAPI', "intensity_mean_EdU_nucleus") # Default columns for cell cycle normalisation
-def cellcycle_analysis(df: pd.DataFrame, values: List[str] = norm_colums, cyto: bool = True) -> pd.DataFrame:
+def cellcycle_analysis(df: pd.DataFrame, H3: bool =False, cyto: bool = True) -> pd.DataFrame:
     """
     Function to normalise cell cycle data using normalise and assign_ccphase functions for each cell line
     :param df: single cell data from omeroscreen
     :param cyto: True if cytoplasmic data is present
     :return: dataframe with cell cycle and cell cycle detailed columns
     """
-
+    if H3:
+        values = ['integrated_int_DAPI', "intensity_mean_EdU_nucleus", "intensity_mean_H3P_nucleus"]
+        df['intensity_mean_H3P_nucleus'] = df['intensity_mean_H3P_nucleus'] - df['intensity_min_H3P_nucleus'] + 1
+    else:
+        values = ['integrated_int_DAPI', "intensity_mean_EdU_nucleus"]
     df['intensity_mean_EdU_nucleus'] = df['intensity_mean_EdU_nucleus'] - df['intensity_min_EdU_nucleus'] + 1
     if cyto:
         df_agg = agg_multinucleates(df)
@@ -65,7 +67,7 @@ def cellcycle_analysis(df: pd.DataFrame, values: List[str] = norm_colums, cyto: 
         df_norm = normalise(df1, values)
         df_norm['integrated_int_DAPI_norm'] = df_norm['integrated_int_DAPI_norm'] * 2
         tempfile = pd.concat([tempfile, df_norm])
-    return assign_ccphase(data=tempfile)
+    return assign_ccphase(data=tempfile, H3=H3)
 
 # Helper Functions for cell cycle normalisation
 def agg_multinucleates(df: pd.DataFrame) -> pd.DataFrame:
@@ -126,7 +128,7 @@ def normalise(df: pd.DataFrame, values: list[str]) -> pd.DataFrame:
     return norm_df
 
 
-def assign_ccphase(data: pd.DataFrame) -> pd.DataFrame:
+def assign_ccphase(data: pd.DataFrame, H3) -> pd.DataFrame:
     """
     Assigns a cell cycle phase to each cell based on normalised EdU and DAPI intensities.
     :param data: dataframe from normalise function
@@ -135,7 +137,10 @@ def assign_ccphase(data: pd.DataFrame) -> pd.DataFrame:
     and col: cellcycle_detailed with Early S/Late S and Polyploid (non-replicating)
     Polyploid (replicating))
     """
-    data["cell_cycle_detailed"] = data.apply(thresholding, axis=1)
+    if H3:
+        data["cell_cycle_detailed"] = data.apply(thresholdingH3, axis=1)
+    else:
+        data["cell_cycle_detailed"] = data.apply(thresholding, axis=1)
     data['cell_cycle'] = data["cell_cycle_detailed"]
     data['cell_cycle'] = data['cell_cycle'].replace(['Early S', 'Late S'], 'S')
     data['cell_cycle'] = data['cell_cycle'].replace(["Polyploid (non-replicating)", "Polyploid (replicating)"],
@@ -177,6 +182,42 @@ def thresholding(data: pd.DataFrame, DAPI_col: str = 'integrated_int_DAPI_norm',
         return "Unassigned"
 
 
+def thresholdingH3(data: pd.DataFrame, DAPI_col: str = 'integrated_int_DAPI_norm',
+                   EdU_col="intensity_mean_EdU_nucleus_norm", H3P_col="intensity_mean_H3P_nucleus_norm") -> str:
+    """
+    Function to assign cell cycle phase based on thresholds of normalised EdU, DAPI and H3P intensities
+    :param data: data from assign_ccphase function
+    :param DAPI_col: default 'integrated_int_DAPI_norm'
+    :param EdU_col: default 'intensity_mean_EdU_nucleus_norm'
+    :param H3P_col: default 'intensity_mean_H3P_nucleus_norm'
+    :return: string indicating cell cycle phase
+    """
+    if data[DAPI_col] <= 1.5:
+        return "Sub-G1"
+
+    elif 1.5 < data[DAPI_col] < 3 and data[EdU_col] < 3:
+        return "G1"
+
+    elif 3 <= data[DAPI_col] < 5.5 and data[EdU_col] < 3 and data[H3P_col] < 5:
+        return "G2"
+
+    elif 3 <= data[DAPI_col] < 5.5 and data[EdU_col] < 3 and data[H3P_col] > 5:
+        return "M"
+
+    elif 1.5 < data[DAPI_col] < 3 and data[EdU_col] > 3:
+        return "Early S"
+
+    elif 3 <= data[DAPI_col] < 5.5 and data[EdU_col] > 3:
+        return "Late S"
+
+    elif data[DAPI_col] >= 5.5 and data[EdU_col] < 3:
+        return "Polyploid (non-replicating)"
+
+    elif data[DAPI_col] >= 5.5 and data[EdU_col] > 3:
+        return "Polyploid (replicating)"
+
+    else:
+        return "Unassigned"
 
 # 3 Cell Cycle Proportion Analysis
 
@@ -197,23 +238,5 @@ def cellcycle_prop(df_norm: pd.DataFrame, cell_cycle: str = 'cell_cycle') -> pd.
     )
     return df_ccphase.reset_index().rename(columns={"experiment": "percent"})
 
-
-
-if __name__ == '__main__':
-    df1 = pd.read_csv('../../data/sample_data_cell_min.csv', index_col=0)
-    dfagg = agg_multinucleates(df1)
-    print(len(dfagg))
-
-
-    df_cc = cellcycle_analysis(df1)
-    print(df_cc.head())
-
-    df_count = count_per_cond(df_cc, 'siCtr')
-    print(df_count)
-
-    df_phase = cellcycle_prop(df_cc)
-    print(df_phase)
-    df_bar = barplot_df(df_phase)
-    print(df_bar)
 
 
