@@ -2,10 +2,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from ifanalysis import normalisation, figures
 import pathlib
-# Matplotlib Style and Colors
-plt.style.use("/Users/hh65/Documents/Current_Coding/hhlab-ifanalysis/tests/matplotlib_style/Style_01.mplstyle")
-prop_cycle = plt.rcParams["axes.prop_cycle"]
-colors = prop_cycle.by_key()["color"]
+
 
 data_path = pathlib.Path('/Users/hh65/Desktop/OmeroScreen_test/single_cell_data/OmeroScreen_test_final_data.csv')
 conditions = ['siCtr', 'siCdc27']

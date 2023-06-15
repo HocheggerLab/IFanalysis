@@ -7,7 +7,9 @@ from ifanalysis.normalisation import *
 from typing import List, Tuple
 
 # Matplotlib Style and Colors
-plt.style.use("/Users/hh65/matplotlib_style/Style_01.mplstyle")
+# Get the path to the styles directory within the package
+STYLE = Path(__file__).resolve().parent / 'styles/Style_01.mplstyle'
+plt.style.use(STYLE)
 prop_cycle = plt.rcParams["axes.prop_cycle"]
 colors = prop_cycle.by_key()["color"]
 
@@ -357,18 +359,3 @@ def cellcycle_boxplot(df, condition, conditions, colors, y_label, title, path):
     save_fig(path, title)
 
 
-if __name__ == '__main__':
-    plt.style.use("/Users/hh65/matplotlib_style/Style_01.mplstyle")
-    prop_cycle = plt.rcParams["axes.prop_cycle"]
-    colors = prop_cycle.by_key()["color"]
-    conditions = ['siCtr', 'siCdc27']
-    df1 = pd.read_csv('../../data/sample_data_cell_min.csv', index_col=0)
-    df_cc = cellcycle_analysis(df1)
-    df_cellcycle = cellcycle_prop(df_cc)
-    df_bar = barplot_df(df_cellcycle)
-    #cellcycle_plot_comb(df_cc, 'intensity_mean_EdU_nucleus_norm', list(df_cc.condition.unique()), colors, 'Comb_Plot', path= pathlib.Path('/Users/hh65/Desktop'))
-    #cellcycle_plot(df_cc, 'intensity_mean_EdU_nucleus_norm', list(df_cc.condition.unique()), colors, 'EdU_Plot', path= pathlib.Path('/Users/hh65/Desktop'))
-    rel_cellnumber(count_per_cond(df1, 'siCtr'), conditions, colors[:len(df1.condition.unique())], 'test_count', Path('/Users/hh65/Desktop'))
-    cellcycle_barplot(df_bar, conditions, 'barplot_test', Path('/Users/hh65/Desktop'))
-    intensity_plot(df_cc, 'intensity_mean_EdU_nucleus_norm', conditions,'intensity_plot_test', Path('/Users/hh65/Desktop'))
-    # hist_plot(df_cc, df_cc.condition.unique(), 'Hist_Plot', path= Path('/Users/hh65/Desktop'))
