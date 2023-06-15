@@ -58,6 +58,32 @@ def rel_cellnumber(df_count: pd.DataFrame, conditions: List[str], cell_line: str
     if save:
         save_fig(path, f"{title} {cell_line}")
 
+def abs_cellnumber(df_count: pd.DataFrame, conditions, cell_line: str, colors = colors,
+                   title: str ='Absolute Cell Number', save: bool = True, path: Path = path) -> None:
+    """
+    Function to plot absulute cell number per condition and cell line
+    :param df_count: dataframe provided by count_per_cond function,
+    :param conditions: List of conditions to be plotted
+    :param cell_line: cell line to be plotted
+    :param colors: option, List of colors to be used for plotting. default, colors from prop_cycle
+    :param title: option, name of the figure used as title in matplotlib and to save the figure default: 'Relative Cell Number'
+    :param save: boolean, default True, if True saves the figure in the path provided
+    :param path: option, default: Path.cwd(), path to save the figure
+    :return: None, saves figure in path
+    """
+    fig, ax = plt.subplots(figsize=(len(conditions), 3))
+    sns.barplot(
+        data= df_count[df_count.cell_line == cell_line],
+        x="condition",
+        y="abs cell count",
+        errorbar="sd",
+        order=conditions,
+        palette=colors,
+        ax=ax,
+    )
+    ax.set_title(f"{title} {cell_line}")
+    if save:
+        save_fig(path, f"{title} {cell_line}")
 def cellcycleplot_comb(df_cc: pd.DataFrame, conditions: List[str], cell_line: str, bins=1000,
                         title: str = 'Combined Cell Cycle Plot', colors: List[str]= colors,
                         col: str ='intensity_mean_EdU_nucleus_norm', save: bool =True, path: Path = Path.cwd()) -> None:
