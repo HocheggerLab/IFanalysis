@@ -8,10 +8,11 @@ from typing import List, Tuple
 
 # Matplotlib Style and Colors
 # Get the path to the styles directory within the package
-STYLE = Path(__file__).resolve().parent / 'styles/Style_01.mplstyle'
+STYLE = Path('~/matplotlib_style/Style_01.mplstyle')
 plt.style.use(STYLE)
 prop_cycle = plt.rcParams["axes.prop_cycle"]
 colors = prop_cycle.by_key()["color"]
+
 
 path = Path.cwd()
 def save_fig(
@@ -86,7 +87,8 @@ def abs_cellnumber(df_count: pd.DataFrame, conditions, cell_line: str, colors = 
     ax.set_title(f"{title} {cell_line}")
     if save:
         save_fig(path, f"{title} {cell_line}")
-def cellcycleplot_comb(df_cc: pd.DataFrame, conditions: List[str], cell_line: str, bins=1000,
+
+def cellcycleplot_comb(df_cc: pd.DataFrame, conditions: List[str], cell_line: str, H3: bool = False, bins=1000,
                         title: str = 'Combined Cell Cycle Plot', colors: List[str]= colors,
                         col: str ='intensity_mean_EdU_nucleus_norm', save: bool =True, path: Path = Path.cwd()) -> None:
     """
@@ -102,7 +104,10 @@ def cellcycleplot_comb(df_cc: pd.DataFrame, conditions: List[str], cell_line: st
     :param path: option, default: Path.cwd(), path to save the figure
     :return: None, saves figure in path
     """
-    phases = ["G1", "S", "G2/M", "Polyploid", "Sub-G1"]
+    if H3:
+        phases = ["G1", "S", "G2", "M", "Polyploid", "Sub-G1"]
+    else:
+        phases = ["G1", "S", "G2/M", "Polyploid", "Sub-G1"]
     col_number = len(conditions)
     df_cc = df_cc[df_cc.cell_line == cell_line]
     condition_list = conditions * 2
@@ -116,6 +121,7 @@ def cellcycleplot_comb(df_cc: pd.DataFrame, conditions: List[str], cell_line: st
         data = df_cc[df_cc.condition == condition_list[i]]
         ax = fig.add_subplot(gs[pos[0], pos[1]])
         if i < len(condition_list)/2:
+            # Histogram Plot on the top row
             data['integrated_int_DAPI_norm'].plot.hist(bins=bins, color=colors[-1], ax=ax)
             ax.set_title(condition_list[i])
             ax.set_xlabel(None)
@@ -124,15 +130,19 @@ def cellcycleplot_comb(df_cc: pd.DataFrame, conditions: List[str], cell_line: st
             else:
                 ax.set_ylabel('')
         else:
+            # Scatter Plot on the bottom row
             ax.scatter(data["integrated_int_DAPI_norm"], data[col], s=1, alpha=0.1)
+            # Create an empty list to store the scatter plot objects
+            scatter_plots = []
             for idx, phase in enumerate(phases):
                 phase_df = data.loc[data.cell_cycle == phase]
-                ax.scatter(
+                scatter = ax.scatter(
                     phase_df["integrated_int_DAPI_norm"],
                     phase_df[col],
                     s=1,
                     c=colors[idx],
                     alpha=0.1,
+                    label=phase  # Add a label for the legend
                 )
                 ax.set_xlabel("norm. DNA content (log2)")
                 ax.set_ylim([y_min, y_max])
@@ -141,18 +151,35 @@ def cellcycleplot_comb(df_cc: pd.DataFrame, conditions: List[str], cell_line: st
                     ax.set_ylabel(col)
                 if i == 6:
                     ax.set_ylabel(col)
+                scatter_plots.append(scatter)
+            # Add legend using the scatter plots and their labels
+            if i == len(condition_list)/2:
+                legend = ax.legend(handles=scatter_plots, loc="upper right")
+
+                # Increase the alpha (transparency) of the legend entries
+                for lh in legend.legendHandles:
+                    lh.set_alpha(0.5)
+                    lh.set_sizes([10])
+
+                # Adjust the appearance of the legend
+                frame = legend.get_frame()
+                frame.set_facecolor('white')
+                frame.set_edgecolor('black')
+
+
         ax.set_xscale("log", base=2)
         ax.xaxis.set_major_formatter(mpl.ticker.ScalarFormatter())
         ax.set_xticks([1, 2, 4, 8])
         ax.set_xlim([1, 16])
 
-        ax.grid(visible=False)
-    fig.suptitle(f"{title} {cell_line}", x=0.1, size=16, weight='bold')
+        ax.grid(visible=False)   
+        
+    fig.suptitle(title, size=16, weight='bold', x=0.05, horizontalalignment='left')
     fig._suptitle.set_weight('bold')
     if save:
         save_fig(path, f"{title} {cell_line}", fig_extension="png")
 
-def cellcycle_scatterplot(df: pd.DataFrame, conditions: List[str], cell_line: str, col: str = 'intensity_mean_EdU_nucleus_norm',
+def cellcycle_scatterplot(df: pd.DataFrame, conditions: List[str], cell_line: str, H3: bool = False, col: str = 'intensity_mean_EdU_nucleus_norm',
                    title='CellCycle Scatter Plot', colors=colors,  y_log=True, save=True, path=Path.cwd()) -> None:
     """
     Function to plot cell cycle scatter plot for a given condition and cell line
@@ -168,8 +195,12 @@ def cellcycle_scatterplot(df: pd.DataFrame, conditions: List[str], cell_line: st
     :return: None, saves figure in path
     """
     df = df[df.cell_line == cell_line]
-    phases = ["G1", "S", "G2/M", "Polyploid", "Sub-G1"]
+    if H3:
+        phases = ["G1", "S", "G2", "M", "Polyploid", "Sub-G1"]
+    else:
+        phases = ["G1", "S", "G2/M", "Polyploid", "Sub-G1"]
     col_number = len(conditions)
+
     fig, ax = plt.subplots(ncols=col_number, figsize=(16, 3), sharey='all')
     y_max = df[col].quantile(0.99) * 1.3
     y_min = df[col].quantile(0.01) * 0.8
@@ -261,7 +292,7 @@ def prop_pivot(df_prop: pd.DataFrame, conditions, H3=False) -> Tuple[pd.DataFram
     return df_mean, df_std
 
 def cellcycle_barplot(df: pd.DataFrame, conditions: List[str], H3 = False,
-                      title: str = 'CellCycle Summary Barplot', save: bool = True, path: Path = Path.cwd()) -> None:
+                      title: str = 'Cell Cycle Summary Barplot', save: bool = True, path: Path = Path.cwd()) -> None:
     """
     Function to plot cell cycle barplot for a given condition and cell line
     :param dfbar: dataframe from cellcycle_prop function
@@ -272,7 +303,7 @@ def cellcycle_barplot(df: pd.DataFrame, conditions: List[str], H3 = False,
     :return: None, saves figure in path
     """
     cell_lines = df.cell_line.unique()
-    fig, ax = plt.subplots(ncols=len(cell_lines), figsize=(6*len(cell_lines), 6))
+    fig, ax = plt.subplots(ncols=len(cell_lines), figsize=(5*len(cell_lines), 5))
     if len(cell_lines) == 1:
         df_mean, df_std = prop_pivot(df, conditions, H3)
         df_mean.plot(kind="bar", stacked=True, yerr=df_std, width=0.75, ax=ax)
@@ -285,8 +316,6 @@ def cellcycle_barplot(df: pd.DataFrame, conditions: List[str], H3 = False,
         else:
             ax.legend(['G1', 'S', 'G2/M', 'Polyploid', 'Sub-G1'], title='CellCyclePhase', bbox_to_anchor=(1, 0.5))
 
-
-
     else:
         for number, cell_line in enumerate(cell_lines):
             df1 = df.loc[df.cell_line == cell_line]
@@ -295,8 +324,11 @@ def cellcycle_barplot(df: pd.DataFrame, conditions: List[str], H3 = False,
             ax[number].set_ylim(0, 110)
             ax[number].set_xticklabels(conditions, rotation=30, ha='right')
             ax[number].set_xlabel(cell_line)
-            if number == 0:
-                    ax[number].legend(['G1', 'S', 'G2/M', 'Polyploid', 'Sub-G1'], title='CellCyclePhase', bbox_to_anchor=((len(cell_lines))*1.2, 1))
+            if number == 0 and H3:
+                    ax[number].legend(['G1', 'S', 'G2', 'M', 'Polyploid', 'Sub-G1'], title='CellCyclePhase', bbox_to_anchor=((len(cell_lines))*1.2, 1))
+                    ax[number].set_ylabel('% of population')
+            elif number == 0:
+                    ax[number].legend(['G1', 'S', 'G2'/'M', 'Polyploid', 'Sub-G1'], title='CellCyclePhase', bbox_to_anchor=((len(cell_lines))*1.2, 1))
                     ax[number].set_ylabel('% of population')
             else:
                 ax[number].legend().remove()
@@ -306,56 +338,34 @@ def cellcycle_barplot(df: pd.DataFrame, conditions: List[str], H3 = False,
         save_fig(path, title, tight_layout=False)
 
 
-def intensity_plot(df, condition, conditions, title , path):
-    fig, ax = plt.subplots(figsize=(4, 3))
 
-    sns.stripplot(x='condition',
-                  y= condition,
-                  data = df,
-                  order = conditions,
-                  size= 2,
-                  alpha = 0.3,
-                  ax=ax)
-    sns.boxplot(x='condition',
-                  y= condition,
-                  data = df,
-                  order= conditions,
-                  width = 0.5,
-                  ax=ax)
-    ax.set_xlabel('')
-    ax.set_ylim((0, 20000))
-    ax.set_xticklabels(conditions, rotation=30, ha='right')
-    fig.suptitle(title, x=0.1, size=16, weight='bold')
-    fig._suptitle.set_weight('bold')
-    save_fig(path, title)
+def cellcycle_intensity(df: pd.DataFrame, conditions: list, intensity_col: str, label, title: str, colors: list = colors, path=path):
+    """Function to plot combined violin plots and barplot of a specific measurment in G1, S and G2/M phases
 
-def violin_plot(df, condition, conditions, title , path):
-    fig, ax = plt.subplots(figsize=(4, 3))
-    sns.violinplot(x='condition',
-                  y= condition,
-                  data = df,
-                  order = conditions,
-                  size= 2,
-                  alpha = 0.3,
-                  ax=ax)
-    ax.set_xlabel('')
-    ax.set_xticklabels(conditions, rotation=30, ha='right')
-    fig.suptitle(title, ha='left', size=16, weight='bold')
-    save_fig(path, title)
-
-
-def cellcycle_boxplot(df, condition, conditions, colors, y_label, title, path):
-    fig, ax = plt.subplots(nrows=3, figsize=(20, 6), sharey=True)
-    phases = ['G1', 'S', 'G2/M']
-    for row, phase in enumerate(phases):
-        sns.boxplot(x='condition', y=condition, data=df[df.cell_cycle==phase], color=colors[row], order=conditions, showfliers=False, ax=ax[row])
-        ax[row].set_xlabel('')
-        ax[row].set_title(phase)
-        if row == 1:
-            ax[row].set_ylabel(y_label)
+    Args:
+        df : normalised dataframe from cell_cycle_normalisation function
+        conditions : list of conditions to plot
+        intensity_col : meaure from IF experiment to plot
+        label : name of the meauremnts fior the y axis and title
+        title : Defaults to '{intensity} intensity in G1, S and G2/M phases'.
+        colors : Defaults to standard qualitative palette
+    """
+    cellcycle_phases = ['G1', 'S', 'G2/M']
+    fig, ax = plt.subplots(nrows= 3, figsize=(len(conditions), 5))
+    for i, phase in enumerate(cellcycle_phases):
+        df_phase = df[df['cell_cycle'] == phase]
+        max_value = df_phase[intensity_col].quantile(0.999)
+        sns.violinplot(x="condition", y=intensity_col, data=df_phase, order=conditions, dodge=False, scale="width", palette=[colors[i]], inner=None, linewidth=0, ax=ax[i])
+        for violin in ax[i].collections:
+            violin.set_alpha(1)
+        sns.boxplot(x="condition", y=intensity_col, data=df_phase, order=conditions, showfliers=False, color='white', saturation=0.5, width=0.2, boxprops={'zorder': 2},ax=ax[i])
+        ax[i].set_ylabel(f"{label} {phase}")
+        if i != 2:
+            ax[i].set_xticklabels([])
         else:
-            ax[row].set_ylabel('')
-    fig.suptitle(title, x=0.1, size=16, weight='bold')
+            ax[i].set_xticklabels(conditions, rotation=30, ha='right')
+        ax[i].set_xlabel('') 
+        ax[i].set_ylim(0, max_value)
+        fig.suptitle(title, size=16, weight='bold', x=0.05, horizontalalignment='left')
+        fig._suptitle.set_weight('bold')
     save_fig(path, title)
-
-
