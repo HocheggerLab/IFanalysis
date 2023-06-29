@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 import pandas as pd
-from ifanalysis import normalisation, figures
+from ifanalysis import normalisation, cellcycle
 import pathlib
 
 
