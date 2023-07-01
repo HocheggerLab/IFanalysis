@@ -106,18 +106,18 @@ def count_plots(df_count: pd.DataFrame, conditions: List[str], title, save: bool
     """
     row_num = len(df_count.cell_line.unique())
     fig, ax = plt.subplots(nrows=row_num, ncols=2, figsize=(6, 2 * row_num))
-    if row_num == 1:
-        ax = [ax]  # Wrap single
+    ax = np.atleast_2d(ax)  # Reshape ax to always have 2 dimensions
+
     for i, cell_line in enumerate(df_count.cell_line.unique()):
         cellnumber(df_count, conditions, cell_line, type='relative', ax=ax[i, 0])
         ax[i, 0].set_title(cell_line)
         ax[i, 0].set_xlabel('')
         cellnumber(df_count, conditions, cell_line, type='absolute', ax=ax[i, 1])
         ax[i, 1].set_xlabel('')
+
     plt.tight_layout()
     if save:
         save_fig(path, title)
-
 
 def count_cells(df: pd.DataFrame, conditions: List[str], ctr_cond: str, title: str = 'Cell Count Analysis',
                 save: bool = True, path: Path = path):
