@@ -6,6 +6,7 @@ def save_fig(
         resolution: int = 300) -> None:
     """
     coherent saving of matplotlib figures as pdfs (default)
+    :rtype: object
     :param path: path for saving
     :param fig_id: name of saved figure
     :param tight_layout: option, default True

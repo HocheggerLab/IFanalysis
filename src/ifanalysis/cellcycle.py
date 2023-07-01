@@ -4,6 +4,7 @@ import matplotlib as mpl
 import seaborn as sns
 from pathlib import Path
 from ifanalysis.normalisation import *
+from ifanalysis._helper_functions import save_fig
 from typing import List, Tuple
 
 # Matplotlib Style and Colors
@@ -15,78 +16,13 @@ colors = prop_cycle.by_key()["color"]
 
 
 path = Path.cwd()
-def save_fig(
-    path: Path, fig_id: str, tight_layout : bool = True, fig_extension: str = "pdf",
-        resolution: int = 300) -> None:
-    """
-    coherent saving of matplotlib figures as pdfs (default)
-    :param path: path for saving
-    :param fig_id: name of saved figure
-    :param tight_layout: option, default True
-    :param fig_extension: option, default pdf
-    :param resolution: option, default 300dpi
-    :return: None, saves Figure in poth
-    """
 
-    dest = path / f"{fig_id}.{fig_extension}"
-    print("Saving figure", fig_id)
-    if tight_layout:
-        plt.tight_layout()
-    plt.savefig(dest, format=fig_extension, dpi=resolution)
-
-def rel_cellnumber(df_count: pd.DataFrame, conditions: List[str], cell_line: str, colors: List[str] = colors,
-                   title: str ='Relative Cell Number', save: bool = True, path: Path =path) -> None:
-    """
-    Function to plot relative cell number per condition and cell line
-    :param df_count: dataframe provided by count_per_cond function,
-    :param conditions: List of conditions to be plotted
-    :param cell_line: cell line to be plotted
-    :param colors: option, List of colors to be used for plotting. default, colors from prop_cycle
-    :param title: option, name of the figure used as title in matplotlib and to save the figure default: 'Relative Cell Number'
-    :param save: boolean, default True, if True saves the figure in the path provided
-    :param path: option, default: Path.cwd(), path to save the figure
-    :return: None, saves figure in path
-    """
-    fig, ax = plt.subplots(figsize=(len(conditions), 3))
-    sns.barplot(
-        data= df_count[df_count.cell_line == cell_line],
-        x="condition",
-        y="norm_count",
-        errorbar="sd",
-        order=conditions,
-        palette=colors,
-        ax=ax,
-    )
-    ax.set_title(f"{title} {cell_line}")
-    if save:
-        save_fig(path, f"{title} {cell_line}")
-
-def abs_cellnumber(df_count: pd.DataFrame, conditions, cell_line: str, colors = colors,
-                   title: str ='Absolute Cell Number', save: bool = True, path: Path = path) -> None:
-    """
-    Function to plot absulute cell number per condition and cell line
-    :param df_count: dataframe provided by count_per_cond function,
-    :param conditions: List of conditions to be plotted
-    :param cell_line: cell line to be plotted
-    :param colors: option, List of colors to be used for plotting. default, colors from prop_cycle
-    :param title: option, name of the figure used as title in matplotlib and to save the figure default: 'Relative Cell Number'
-    :param save: boolean, default True, if True saves the figure in the path provided
-    :param path: option, default: Path.cwd(), path to save the figure
-    :return: None, saves figure in path
-    """
-    fig, ax = plt.subplots(figsize=(len(conditions), 3))
-    sns.barplot(
-        data= df_count[df_count.cell_line == cell_line],
-        x="condition",
-        y="abs cell count",
-        errorbar="sd",
-        order=conditions,
-        palette=colors,
-        ax=ax,
-    )
-    ax.set_title(f"{title} {cell_line}")
-    if save:
-        save_fig(path, f"{title} {cell_line}")
+def standard_cellcycleplots(df: pd.DataFrame, conditions: List[str], file_path=path) -> None:
+    df_cc = cellcycle_analysis(df)
+    for cell_line in df_cc.cell_line.unique():
+        cellcycleplot_comb(df_cc, conditions, cell_line, path=file_path)
+    df_prop = cellcycle_prop(df_cc)
+    cellcycle_barplot(df_prop, conditions, path=file_path)
 
 def cellcycleplot_comb(df_cc: pd.DataFrame, conditions: List[str], cell_line: str, H3: bool = False, bins=1000,
                         title: str = 'Combined Cell Cycle Plot', colors: List[str]= colors,
@@ -295,7 +231,7 @@ def cellcycle_barplot(df: pd.DataFrame, conditions: List[str], H3 = False,
                       title: str = 'Cell Cycle Summary Barplot', save: bool = True, path: Path = Path.cwd()) -> None:
     """
     Function to plot cell cycle barplot for a given condition and cell line
-    :param dfbar: dataframe from cellcycle_prop function
+    :param df: dataframe from cellcycle_analysis function
     :param conditions: list of conditions to be plotted
     :param title: default 'CellCycle Summary Barplot'
     :param save: boolean, default True, if True saves the figure in the path provided
@@ -328,7 +264,7 @@ def cellcycle_barplot(df: pd.DataFrame, conditions: List[str], H3 = False,
                     ax[number].legend(['G1', 'S', 'G2', 'M', 'Polyploid', 'Sub-G1'], title='CellCyclePhase', bbox_to_anchor=((len(cell_lines))*1.2, 1))
                     ax[number].set_ylabel('% of population')
             elif number == 0:
-                    ax[number].legend(['G1', 'S', 'G2'/'M', 'Polyploid', 'Sub-G1'], title='CellCyclePhase', bbox_to_anchor=((len(cell_lines))*1.2, 1))
+                    ax[number].legend(['G1', 'S', 'G2/M', 'Polyploid', 'Sub-G1'], title='CellCyclePhase', bbox_to_anchor=((len(cell_lines))*1.2, 1))
                     ax[number].set_ylabel('% of population')
             else:
                 ax[number].legend().remove()

@@ -1,46 +1,8 @@
 import numpy as np
 import pandas as pd
 
-# 1) Cell Counting
-def count_per_cond(df: pd.DataFrame, ctr_cond: str) -> pd.DataFrame:
-    """
-    Function to generate counts per condition and cell line data using groupby
-    of the single cell dataframe from omero-screen. Data are grouped by
-    cell line and condition. The function also normalises
-    the data using normalise count function with the supplied ctr_cond as a reference.
-    :param df: dataframe from omero-screen
-    :param ctr_cond: control condition
-    :return: dataframe with counts per condition and cell line
-    """
-    df_count = (
-        df.groupby(["cell_line", "condition", "well", "plate_id"])["experiment"]
-        .count()
-        .reset_index()
-        .rename(columns={"experiment": "abs cell count"})
-    )
-    df_count["norm_count"] = normalise_count(df_count, ctr_cond)
-    return df_count
 
-def normalise_count(df: pd.DataFrame, ctr_cond: str) -> pd.Series:
-    """
-    Function to normalise counts per condition and cell line data using groupby
-    :param df: grouped by dataframe provided by norm_count function
-    :param ctr_cond: control condition
-    :return: pandas series with normalised counts
-    """
-    norm_count = pd.DataFrame()
-    for cell_line in df["cell_line"].unique():
-        norm_value = df.loc[
-            (df["cell_line"] == cell_line) & (df["condition"] == ctr_cond),
-            "abs cell count",
-        ].mean()
-        rel_cellcount = (
-                df.loc[df["cell_line"] == cell_line, "abs cell count"] / norm_value
-        )
-        norm_count = pd.concat([norm_count, rel_cellcount])
-    return norm_count
 
-# 2) Cell Cycle Normalisation
 
 norm_colums = ('integrated_int_DAPI', "intensity_mean_EdU_nucleus") # Default columns for cell cycle normalisation
 def cellcycle_analysis(df: pd.DataFrame, H3: bool =False, cyto: bool = True) -> pd.DataFrame:
@@ -50,17 +12,18 @@ def cellcycle_analysis(df: pd.DataFrame, H3: bool =False, cyto: bool = True) -> 
     :param cyto: True if cytoplasmic data is present
     :return: dataframe with cell cycle and cell cycle detailed columns
     """
+    df1 = df.copy()
     if H3:
         values = ['integrated_int_DAPI', "intensity_mean_EdU_nucleus", "intensity_mean_H3P_nucleus"]
-        df['intensity_mean_H3P_nucleus'] = df['intensity_mean_H3P_nucleus'] - df['intensity_min_H3P_nucleus'] + 1
+        df1['intensity_mean_H3P_nucleus'] = df1['intensity_mean_H3P_nucleus'] - df1['intensity_min_H3P_nucleus'] + 1
     else:
         values = ['integrated_int_DAPI', "intensity_mean_EdU_nucleus"]
-    df['intensity_mean_EdU_nucleus'] = df['intensity_mean_EdU_nucleus'] - df['intensity_min_EdU_nucleus'] + 1
+    df1['intensity_mean_EdU_nucleus'] = df1['intensity_mean_EdU_nucleus'] - df1['intensity_min_EdU_nucleus'] + 1
     if cyto:
-        df_agg = agg_multinucleates(df)
+        df_agg = agg_multinucleates(df1)
         df_agg_corr = delete_duplicates(df_agg)
     else:
-        df_agg_corr = df.copy()
+        df_agg_corr = df1.copy()
     tempfile = pd.DataFrame()
     for cell_line in df_agg_corr["cell_line"].unique():
         df1 = df_agg_corr.loc[df_agg_corr["cell_line"] == cell_line]
