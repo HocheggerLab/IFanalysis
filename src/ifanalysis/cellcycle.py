@@ -17,12 +17,12 @@ colors = prop_cycle.by_key()["color"]
 
 path = Path.cwd()
 
-def standard_cellcycleplots(df: pd.DataFrame, conditions: List[str], file_path=path) -> None:
-    df_cc = cellcycle_analysis(df)
+def standard_cellcycleplots(df: pd.DataFrame, conditions: List[str], H3=False, file_path=path) -> None:
+    df_cc = cellcycle_analysis(df, H3=H3)
     for cell_line in df_cc.cell_line.unique():
-        cellcycleplot_comb(df_cc, conditions, cell_line, path=file_path)
+        cellcycleplot_comb(df_cc, conditions, cell_line, H3=H3, path=file_path)
     df_prop = cellcycle_prop(df_cc)
-    cellcycle_barplot(df_prop, conditions, path=file_path)
+    cellcycle_barplot(df_prop, conditions, H3=H3, path=file_path)
 
 def cellcycleplot_comb(df_cc: pd.DataFrame, conditions: List[str], cell_line: str, H3: bool = False, bins=1000,
                         title: str = 'Combined Cell Cycle Plot', colors: List[str]= colors,
@@ -113,7 +113,7 @@ def cellcycleplot_comb(df_cc: pd.DataFrame, conditions: List[str], cell_line: st
     fig.suptitle(title, size=16, weight='bold', x=0.05, horizontalalignment='left')
     fig._suptitle.set_weight('bold')
     if save:
-        save_fig(path, f"{title} {cell_line}", fig_extension="png")
+        save_fig(path, f"{title} {cell_line}", fig_extension="pdf")
 
 def cellcycle_scatterplot(df: pd.DataFrame, conditions: List[str], cell_line: str, H3: bool = False, col: str = 'intensity_mean_EdU_nucleus_norm',
                    title='CellCycle Scatter Plot', colors=colors,  y_log=True, save=True, path=Path.cwd()) -> None:
@@ -137,7 +137,7 @@ def cellcycle_scatterplot(df: pd.DataFrame, conditions: List[str], cell_line: st
         phases = ["G1", "S", "G2/M", "Polyploid", "Sub-G1"]
     col_number = len(conditions)
 
-    fig, ax = plt.subplots(ncols=col_number, figsize=(16, 3), sharey='all')
+    fig, ax = plt.subplots(ncols=col_number, figsize=(3*len(conditions), 4), sharey='all')
     y_max = df[col].quantile(0.99) * 1.3
     y_min = df[col].quantile(0.01) * 0.8
     for i, condition in enumerate(conditions):
@@ -157,7 +157,7 @@ def cellcycle_scatterplot(df: pd.DataFrame, conditions: List[str], cell_line: st
         ax[i].set_xscale("log", base=2)
         ax[i].xaxis.set_major_formatter(mpl.ticker.ScalarFormatter())
         ax[i].set_xticks([1, 2, 4, 8])
-        ax[i].set_xlim([1, 8])
+        ax[i].set_xlim([1, 16])
         ax[i].set_ylim([y_min, y_max])
         ax[i].grid(visible=False)
         ax[i].set_title(conditions[i])
@@ -165,9 +165,9 @@ def cellcycle_scatterplot(df: pd.DataFrame, conditions: List[str], cell_line: st
             ax[i].set_ylabel(col)
         if y_log:
             ax[i].set_yscale("log")
-        fig.suptitle(f"{title} {cell_line}", x=0.1, size=16, weight='bold')
+        fig.suptitle(f"{title} {cell_line}", size=16, weight='bold', x=0.05, horizontalalignment='left')
     if save:
-        save_fig(path, f"{title} {cell_line}", fig_extension="png")
+        save_fig(path, f"{title} {cell_line}", fig_extension="pdf")
 
 
 def cellcycle_histplot(df: pd.DataFrame, conditions: List[str], cell_line: str, title='CellCycle Histogram',
