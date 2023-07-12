@@ -112,14 +112,17 @@ def count_plots(df_count: pd.DataFrame, conditions: List[str], title, save: bool
         cellnumber(df_count, conditions, cell_line, type='relative', ax=ax[i, 0])
         ax[i, 0].set_title(cell_line)
         ax[i, 0].set_xlabel('')
+        ax[i, 0].set_xticklabels(conditions, rotation=30, ha='right')
         cellnumber(df_count, conditions, cell_line, type='absolute', ax=ax[i, 1])
         ax[i, 1].set_xlabel('')
-
+        ax[i, 1].set_xticklabels(conditions, rotation=30, ha='right')
+    fig.suptitle(title, size=16, weight='bold', x=0.05, horizontalalignment='left')
+    fig._suptitle.set_weight('bold')
     plt.tight_layout()
     if save:
         save_fig(path, title)
 
-def count_cells(df: pd.DataFrame, conditions: List[str], ctr_cond: str, title: str = 'Cell Count Analysis',
+def count_cells(df: pd.DataFrame, conditions: List[str], ctr_cond: str = 'CTR', title: str ='Cell Counts"',
                 save: bool = True, path: Path = path):
     """
     Function to count cells per condition and cell line and generate plots
