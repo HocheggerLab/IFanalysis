@@ -35,10 +35,10 @@ def prop_pivot(df_prop: pd.DataFrame, conditions, H3=False) -> Tuple[pd.DataFram
         cc_phases = ["G1", "S", "G2/M", "Polyploid", "Sub-G1"]
     df_prop1 = df_prop.copy()
     df_prop1["condition"] = pd.Categorical(df_prop1["condition"], categories=conditions, ordered=True)
-    df_mean = df_prop1.groupby(["condition", "cell_cycle"])["percent"].mean().sort_index(level="condition").reset_index().pivot_table(columns=["cell_cycle"], index=["condition"])
+    df_mean = df_prop1.groupby(["condition", "cell_cycle"])["percent"].mean().sort_index(level="condition").reset_index().pivot_table(columns=["cell_cycle"], index=["condition"], observed=False)
     df_mean.columns = df_mean.columns.droplevel(0)
     df_mean = df_mean[cc_phases]
-    df_std = df_prop1.groupby(["condition", "cell_cycle"])["percent"].std().sort_index(level="condition").reset_index().pivot_table(columns=["cell_cycle"], index=["condition"])
+    df_std = df_prop1.groupby(["condition", "cell_cycle"])["percent"].std().sort_index(level="condition").reset_index().pivot_table(columns=["cell_cycle"], index=["condition"], observed=False)
     df_std.columns = df_std.columns.droplevel(0)
     df_std = df_std[cc_phases]
     return df_mean, df_std

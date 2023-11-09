@@ -59,7 +59,7 @@ def normalise_count(df: pd.DataFrame, ctr_cond: str) -> pd.Series:
 
 
 def cellnumber(df_count: pd.DataFrame, conditions: List[str], cell_line: str, type: str = "relative",
-                   title: str = None, save: bool = False, path: Path = None, ax=None):
+                   title: str = None, save: bool = False, path: Path = None, fig = None, ax=None):
     """
     Function to plot relative cell number per condition and cell line
 
@@ -84,12 +84,13 @@ def cellnumber(df_count: pd.DataFrame, conditions: List[str], cell_line: str, ty
         y=y_axis,
         errorbar="sd",
         order=conditions,
+        color=colors[0],
         ax=ax,
     )
     if title:
         plt.title(f"{title} {cell_line}")
     if save:
-        save_fig(path, f"{title} {cell_line}")
+        save_fig(fig, path, f"{title} {cell_line}")
     return plot
 
 
@@ -112,17 +113,19 @@ def count_plots(df_count: pd.DataFrame, conditions: List[str], title, save: bool
         cellnumber(df_count, conditions, cell_line, type='relative', ax=ax[i, 0])
         ax[i, 0].set_title(cell_line)
         ax[i, 0].set_xlabel('')
+        ax[i, 0].set_xticks(range(len(conditions)))
         ax[i, 0].set_xticklabels(conditions, rotation=30, ha='right')
         cellnumber(df_count, conditions, cell_line, type='absolute', ax=ax[i, 1])
         ax[i, 1].set_xlabel('')
+        ax[i, 1].set_xticks(range(len(conditions)))
         ax[i, 1].set_xticklabels(conditions, rotation=30, ha='right')
-    fig.suptitle(title, size=16, weight='bold', x=0.05, horizontalalignment='left')
+    fig.suptitle(title, size=12, weight='bold', x=0.05, horizontalalignment='left')
     fig._suptitle.set_weight('bold')
     plt.tight_layout()
     if save:
-        save_fig(path, title)
+        save_fig(fig, path, title)
 
-def count_cells(df: pd.DataFrame, conditions: List[str], ctr_cond: str = 'CTR', title: str ='Cell Counts"',
+def count_cells(df: pd.DataFrame, conditions: List[str], ctr_cond: str = 'CTR', title: str ='Cell Counts',
                 save: bool = True, path: Path = path):
     """
     Function to count cells per condition and cell line and generate plots

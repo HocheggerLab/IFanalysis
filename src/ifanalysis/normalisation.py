@@ -184,8 +184,7 @@ def thresholdingH3(data: pd.DataFrame, DAPI_col: str = 'integrated_int_DAPI_norm
 
 # 3 Cell Cycle Proportion Analysis
 
-
-def cellcycle_prop(df_norm: pd.DataFrame, cell_cycle: str = 'cell_cycle') -> pd.DataFrame:
+def cellcycle_prop(df: pd.DataFrame, cell_cycle: str = 'cell_cycle') -> pd.DataFrame:
     """
     Function to calculate the proportion of cells in each cell cycle phase
     :param df_norm: dataframe from assign_ccphase function
@@ -193,13 +192,35 @@ def cellcycle_prop(df_norm: pd.DataFrame, cell_cycle: str = 'cell_cycle') -> pd.
     :return: grouped dataframe with cell cycle proportions
     """
     df_ccphase = (
-        df_norm.groupby(["plate_id", "well", "cell_line", "condition", cell_cycle])[
+        df.groupby(["plate_id", "well", "cell_line", "condition", cell_cycle])[
             "experiment"
         ].count()
-        / df_norm.groupby(["plate_id", "well", "cell_line", "condition"])["experiment"].count()
+        / df.groupby(["plate_id", "well", "cell_line", "condition"])["experiment"].count()
         * 100
     )
     return df_ccphase.reset_index().rename(columns={"experiment": "percent"})
 
-
+def prop_pivot(df: pd.DataFrame, conditions, H3):
+    """
+    Function to pivot the cell cycle proportion dataframe and get the mean and std of each cell cycle phase
+    This will be the imput to plot the stacked barplots with errorbars.
+    :param df_prop: dataframe from cellcycle_prop function
+    :param conditions: list of conditions sort the order of data
+    :param H3: boolean, default False, if True the function will use M phase instead of G2/M based on H3 staining
+    :return: dataframe to submit to the barplot function
+    """
+    df_prop = cellcycle_prop(df)
+    if H3:
+        cc_phases = ["Sub-G1", "G1", "S", "G2", "M", "Polyploid"]
+    else:   
+        cc_phases = ["Sub-G1", "G1", "S", "G2/M", "Polyploid"]
+    df_prop1 = df_prop.copy()
+    df_prop1["condition"] = pd.Categorical(df_prop1["condition"], categories=conditions, ordered=True)
+    df_mean = df_prop1.groupby(["condition", "cell_cycle"], observed=False)["percent"].mean().sort_index(level="condition").reset_index().pivot_table(columns=["cell_cycle"], index=["condition"])
+    df_mean.columns = df_mean.columns.droplevel(0)
+    df_mean = df_mean[cc_phases]
+    df_std = df_prop1.groupby(["condition", "cell_cycle"], observed=False)["percent"].std().sort_index(level="condition").reset_index().pivot_table(columns=["cell_cycle"], index=["condition"])
+    df_std.columns = df_std.columns.droplevel(0)
+    df_std = df_std[cc_phases]
+    return df_mean, df_std
 
