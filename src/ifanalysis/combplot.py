@@ -138,5 +138,5 @@ def combplot(df, conditions, cell_line, title_str, cell_number=None, H3=False, s
     plt.subplots_adjust(top=0.85)  # Increase the value to leave more space
     plt.tight_layout()
     if save:
-        save_fig(fig, path, f"CombPlot_{title_str}_{cell_line}", fig_extension="png")
+        save_fig(fig, path, f"{cell_line} CombPlot {title_str}", fig_extension="png")
 

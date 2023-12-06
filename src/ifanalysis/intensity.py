@@ -82,7 +82,7 @@ def int_combplot(df, conditions, cell_line, col, label=None, title=None, cellnum
         ax_int.set_ylim([y_min+1, y_max+1])
         plot_int_scatter(ax_int, df1, condition, col, cellnumber)
         if i == 0:
-            ax_int.set_ylabel("pRB intensity")
+            ax_int.set_ylabel(col)
             ax_int.yaxis.set_major_formatter(ticker.FuncFormatter(lambda x, pos: str(int(x))))
         else:    
             ax_int.set_ylabel('')
