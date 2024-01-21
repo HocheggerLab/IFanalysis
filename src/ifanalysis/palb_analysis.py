@@ -48,8 +48,8 @@ def count_plots(df_count, title, count_type, path):
 
 def intensityplot(df, measurement, title, path):
     # Assuming 'df' is your DataFrame, and you have 'gwli', 'area_cell', and 'palb' columns
-    conditions = df['gwli'].unique()
-    hue_levels = df['palb'].unique()
+    conditions = np.sort(df['gwli'].unique())
+    hue_levels = np.sort(df['palb'].unique())
     hue_count = len(hue_levels)
     width_per_hue = 0.8 / hue_count  # Default width of violin plots in seaborn
 

@@ -5,8 +5,9 @@
 # lines.marker: None                 # the default marker
 
 # set  facecolor
-axes.facecolor:     white 
-axes.edgecolor:   black
+figure.facecolor: white
+axes.facecolor: white 
+axes.edgecolor: black
 
 # Set custom colors. All colors are in web style hex format.
 axes.prop_cycle: cycler('color', ['1d4289', 'd3273e', '41b6e6', 'dc582a', '94a596', '00bfb2', '7F8487', '413F42', '413F42'])
@@ -18,6 +19,12 @@ axes.spines.top: False          # Display axis spines (True or False)
 axes.spines.left: True          # We only want the left and bottom spines
 axes.spines.right: False
 axes.spines.bottom: True
+
+# Set text color
+text.color: black
+axes.labelcolor: black
+xtick.color: black
+ytick.color: black
 
 
 
@@ -42,7 +49,7 @@ figure.dpi: 150                 # figure dots per inch
 
 # Properties for saving the figure. Ensure a high DPI when saving so we have a good resolution.
 savefig.dpi:       300          # figure dots per inch or 'figure'
-savefig.transparent: true        # figure face color when saving
+savefig.transparent: false        # figure face color when saving
 savefig.bbox:      tight        # {tight, standard}
 savefig.pad_inches:   0.2       # padding when bbox is set to tight
 

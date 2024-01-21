@@ -8,9 +8,9 @@ from ifanalysis._helper_functions import save_fig
 from ifanalysis.normalisation import *
 
 # Matplotlib Style and Colors
-
-STYLE = Path('~/matplotlib_style/Style_01.mplstyle')
-plt.style.use(STYLE)
+module_dir = Path(__file__).parent
+style_path = module_dir / 'styles/Style_01.mplstyle'
+plt.style.use(str(style_path))
 prop_cycle = plt.rcParams["axes.prop_cycle"]
 colors = prop_cycle.by_key()["color"]
 
@@ -52,14 +52,23 @@ def normalise_count(df: pd.DataFrame, ctr_cond: str) -> pd.Series:
             "abs cell count",
         ].mean()
         rel_cellcount = (
-                df.loc[df["cell_line"] == cell_line, "abs cell count"] / norm_value
+            df.loc[df["cell_line"] == cell_line, "abs cell count"] / norm_value
         )
         norm_count = pd.concat([norm_count, rel_cellcount])
     return norm_count
 
 
-def cellnumber(df_count: pd.DataFrame, conditions: List[str], cell_line: str, type: str = "relative",
-                   title: str = None, save: bool = False, path: Path = None, fig = None, ax=None):
+def cellnumber(
+    df_count: pd.DataFrame,
+    conditions: List[str],
+    cell_line: str,
+    type: str = "relative",
+    title: str = None,
+    save: bool = False,
+    path: Path = None,
+    fig=None,
+    ax=None,
+):
     """
     Function to plot relative cell number per condition and cell line
 
@@ -94,8 +103,13 @@ def cellnumber(df_count: pd.DataFrame, conditions: List[str], cell_line: str, ty
     return plot
 
 
-
-def count_plots(df_count: pd.DataFrame, conditions: List[str], title, save: bool = True, path: Path = path):
+def count_plots(
+    df_count: pd.DataFrame,
+    conditions: List[str],
+    title,
+    save: bool = True,
+    path: Path = path,
+):
     """
     Function to plot relative and absolute cell number per condition and cell line
     combined in one figure
@@ -110,23 +124,30 @@ def count_plots(df_count: pd.DataFrame, conditions: List[str], title, save: bool
     ax = np.atleast_2d(ax)  # Reshape ax to always have 2 dimensions
 
     for i, cell_line in enumerate(df_count.cell_line.unique()):
-        cellnumber(df_count, conditions, cell_line, type='relative', ax=ax[i, 0])
+        cellnumber(df_count, conditions, cell_line, type="relative", ax=ax[i, 0])
         ax[i, 0].set_title(cell_line)
-        ax[i, 0].set_xlabel('')
+        ax[i, 0].set_xlabel("")
         ax[i, 0].set_xticks(range(len(conditions)))
-        ax[i, 0].set_xticklabels(conditions, rotation=30, ha='right')
-        cellnumber(df_count, conditions, cell_line, type='absolute', ax=ax[i, 1])
-        ax[i, 1].set_xlabel('')
+        ax[i, 0].set_xticklabels(conditions, rotation=30, ha="right")
+        cellnumber(df_count, conditions, cell_line, type="absolute", ax=ax[i, 1])
+        ax[i, 1].set_xlabel("")
         ax[i, 1].set_xticks(range(len(conditions)))
-        ax[i, 1].set_xticklabels(conditions, rotation=30, ha='right')
-    fig.suptitle(title, size=12, weight='bold', x=0.05, horizontalalignment='left')
-    fig._suptitle.set_weight('bold')
+        ax[i, 1].set_xticklabels(conditions, rotation=30, ha="right")
+    fig.suptitle(title, size=12, weight="bold", x=0.05, horizontalalignment="left")
+    fig._suptitle.set_weight("bold")
     plt.tight_layout()
     if save:
         save_fig(fig, path, title)
 
-def count_cells(df: pd.DataFrame, conditions: List[str], ctr_cond: str = 'CTR', title: str ='Cell Counts',
-                save: bool = True, path: Path = path):
+
+def count_cells(
+    df: pd.DataFrame,
+    conditions: List[str],
+    ctr_cond: str = "CTR",
+    title: str = "Cell Counts",
+    save: bool = True,
+    path: Path = path,
+):
     """
     Function to count cells per condition and cell line and generate plots
     :param df: dataframe from omero_screen
