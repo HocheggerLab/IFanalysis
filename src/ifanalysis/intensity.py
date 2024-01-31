@@ -8,10 +8,10 @@ from ifanalysis.normalisation import *
 from ifanalysis._helper_functions import save_fig
 from typing import List, Tuple
 
-# Matplotlib Style and Colors
-# Get the path to the styles directory within the package
-STYLE = Path('~/matplotlib_style/Style_01.mplstyle')
-plt.style.use(STYLE)
+## Matplotlib Style and Colors
+module_dir = Path(__file__).parent
+style_path = module_dir / 'styles/Style_01.mplstyle'
+plt.style.use(str(style_path))
 prop_cycle = plt.rcParams["axes.prop_cycle"]
 colors = prop_cycle.by_key()["color"]
 

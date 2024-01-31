@@ -7,7 +7,12 @@ from ifanalysis._helper_functions import save_fig
 from pathlib import Path
 from typing import Optional
 path = Path.cwd() 
-
+# Matplotlib Style and Colors
+module_dir = Path(__file__).parent
+style_path = module_dir / 'styles/Style_01.mplstyle'
+plt.style.use(str(style_path))
+prop_cycle = plt.rcParams["axes.prop_cycle"]
+colors = prop_cycle.by_key()["color"]
 
 def plot_histogram(ax, i, data):
     sns.histplot(data=data, x="integrated_int_DAPI_norm", ax=ax)

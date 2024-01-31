@@ -3,8 +3,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 from ifanalysis._helper_functions import save_fig
+from pathlib import Path
 
-
+# Matplotlib Style and Colors
+module_dir = Path(__file__).parent
+style_path = module_dir / 'styles/Style_01.mplstyle'
+plt.style.use(str(style_path))
+prop_cycle = plt.rcParams["axes.prop_cycle"]
+colors = prop_cycle.by_key()["color"]
 
 def count_per_cond(df: pd.DataFrame) -> pd.DataFrame:
     # Combine groupby, count, and merge operations into a single step
